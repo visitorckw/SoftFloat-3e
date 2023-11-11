@@ -35,6 +35,7 @@
 #=============================================================================
 
 SOURCE_DIR ?= ../../source
+BUILD_DIR ?= .
 SPECIALIZE_TYPE ?= RISCV
 
 SOFTFLOAT_OPTS ?= \
@@ -45,8 +46,9 @@ DELETE = rm -f
 C_INCLUDES = -I. -I$(SOURCE_DIR)/$(SPECIALIZE_TYPE) -I$(SOURCE_DIR)/include
 COMPILE_C = \
   gcc -c -Werror-implicit-function-declaration \
-    $(SOFTFLOAT_OPTS) $(C_INCLUDES) -O2 -o $@
+    $(SOFTFLOAT_OPTS) $(C_INCLUDES) -O2 -o $(BUILD_DIR)/$@
 MAKELIB = ar crs $@
+SHELL_HACK := $(shell mkdir -p $(BUILD_DIR))
 
 OBJ = .o
 LIB = .a
@@ -54,7 +56,7 @@ LIB = .a
 OTHER_HEADERS = $(SOURCE_DIR)/include/opts-GCC.h
 
 .PHONY: all
-all: softfloat$(LIB)
+all: $(BUILD_DIR)/softfloat$(LIB)
 
 OBJS_PRIMITIVES = \
   s_eq128$(OBJ) \
@@ -371,10 +373,10 @@ $(OBJS_PRIMITIVES) $(OBJS_OTHERS): %$(OBJ): $(SOURCE_DIR)/%.c
 $(OBJS_SPECIALIZE): %$(OBJ): $(SOURCE_DIR)/$(SPECIALIZE_TYPE)/%.c
 	$(COMPILE_C) $(SOURCE_DIR)/$(SPECIALIZE_TYPE)/$*.c
 
-softfloat$(LIB): $(OBJS_ALL)
+$(BUILD_DIR)/softfloat$(LIB): $(OBJS_ALL)
 	$(DELETE) $@
-	$(MAKELIB) $^
+	$(MAKELIB) $(addprefix $(BUILD_DIR)/, $^)
 
 .PHONY: clean
 clean:
-	$(DELETE) $(OBJS_ALL) softfloat$(LIB)
+	$(DELETE) $(addprefix $(BUILD_DIR)/, $(OBJS_ALL)) $(BUILD_DIR)/softfloat$(LIB)
